@@ -25,7 +25,7 @@ io.on('connection', (socket) => {
 
         socket.join(user.room);
 
-        io.to(user.room).emit('roomData', {room: user.room, users: getUsersInRoom(user.room)});
+        io.to(user.room).emit('roomData', {room: user.room, onlineStudents: getUsersInRoom(user.room), offlineStudents: getUsersInRoom(user.room)});
 
         callback();
     });
