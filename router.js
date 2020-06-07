@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
-const db = require('./database')
+const db = require('./database');
 
 //Root
 router.get('/', (req, res) => {

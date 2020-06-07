@@ -1,16 +1,17 @@
 const users = [];
+const db = require('./database');
 
-const addUser = ({ id, name, room }) => {
+const addUser = ({ id, name, courseID }) => {
     name = name.trim().toLowerCase();
-    room = room.trim().toLowerCase();
+    courseID = courseID.trim().toLowerCase();
 
-    const existingUser = users.find((user) => user.room === room && user.name === name);
+    const existingUser = users.find((user) => user.courseID === courseID && user.name === name);
 
     if(existingUser) {
         return { error: 'Username is taken' }
     }
 
-    const user = {id, name, room};
+    const user = {id, name, courseID};
 
     users.push(user);
 
@@ -27,6 +28,16 @@ const removeUser = (id) => {
 
 const getUser = (id) => users.find((user) => user.id === id);
 
-const getUsersInRoom = (room) => users.filter((user) => user.room === room);
+const getUsersInRoom = (courseID) => users.filter((user) => user.courseID === courseID);
 
-module.exports = { addUser, removeUser, getUser, getUsersInRoom }
+//const getOfflineStudents = (course) => users.filter((user) => false);//user.courseID === course._id.trim().toLowerCase());
+
+function getOfflineStudents(course) {
+    const online = getUsersInRoom(course._id);
+    //result = course.Students.filter((student) => !online.includes(student));
+    result = getUsersInRoom(course._id.trim().toLowerCase());
+    console.log("offlineStudents", result);
+    return result;
+}
+
+module.exports = { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents }
