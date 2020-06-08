@@ -4,7 +4,7 @@ const http = require('http');
 const cors = require('cors');
 const db = require('./database');
 
-const { addUser, removeUser, getUser, getUsersInRoom } = require('./users.js');
+const { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents } = require('./users.js');
 
 const PORT = process.env.PORT || 5000;
 
@@ -28,9 +28,7 @@ io.on('connection', (socket) => {
             try {
                 const course = await db.getCourseById(room);
                 socket.emit('message', { user: 'admin', text: `${user.name}, welcome to the room ${course.Name}` });
-                console.log(course);
-                getOfflineStudents(course);
-                io.to(user.courseID).emit('roomData', { room: course.Name, onlineStudents: getUsersInRoom(user.courseID), offlineStudents: getUsersInRoom(user.courseID) });
+                io.to(user.courseID).emit('roomData', { room: course.Name, onlineStudents: getUsersInRoom(user.courseID), offlineStudents: getOfflineStudents(course) });
 
             } catch (error) {
                 callback(error);

@@ -30,14 +30,9 @@ const getUser = (id) => users.find((user) => user.id === id);
 
 const getUsersInRoom = (courseID) => users.filter((user) => user.courseID === courseID);
 
-//const getOfflineStudents = (course) => users.filter((user) => false);//user.courseID === course._id.trim().toLowerCase());
-
 function getOfflineStudents(course) {
-    const online = getUsersInRoom(course._id);
-    //result = course.Students.filter((student) => !online.includes(student));
-    result = getUsersInRoom(course._id.trim().toLowerCase());
-    console.log("offlineStudents", result);
-    return result;
+    const online = getUsersInRoom(course._id.toString().trim().toLowerCase());
+    return course.Students.filter((student) => online.findIndex((onlineStudent) => onlineStudent.name == student.name.toLowerCase()) == -1);
 }
 
 module.exports = { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents }
