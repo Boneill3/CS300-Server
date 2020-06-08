@@ -2,7 +2,7 @@ const express = require('express');
 const socketio = require('socket.io');
 const http = require('http');
 const cors = require('cors');
-const db = require('./database');
+const { courses } = require('./database');
 
 const { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents } = require('./users.js');
 
@@ -19,28 +19,29 @@ app.use(router);
 
 io.on('connection', (socket) => {
     socket.on('join', ({ name, room }, callback) => {
-        const { error, user } = addUser({ id: socket.id, name, courseID: room });
-
-        if (error) return callback(error);
 
         async function getCourse(room) {
 
             try {
-                const course = await db.getCourseById(room);
+                const result = await courses.getCourseById(room);
+                const course = (result.length > 0 ? result[0] : {});
+                const { error, user } = addUser({ id: socket.id, name, courseID: room, course: course });
+
+                if (error) return callback(error);
+
+                socket.join(user.courseID);
                 socket.emit('message', { user: 'admin', text: `${user.name}, welcome to the room ${course.Name}` });
                 io.to(user.courseID).emit('roomData', { room: course.Name, onlineStudents: getUsersInRoom(user.courseID), offlineStudents: getOfflineStudents(course) });
 
+                socket.broadcast.to(user.courseID).emit('message', { user: 'admin', text: `${user.name}, has joined!` });
             } catch (error) {
+                console.log("Socket Connection Error on getCourse: ", error);
                 callback(error);
             }
         }
         
         getCourse(room);
-        socket.broadcast.to(user.courseID).emit('message', { user: 'admin', text: `${user.name}, has joined!` });
-        socket.join(user.courseID);
 
-
-        callback();
     });
 
     socket.on('sendMessage', (message, callback) => {
@@ -50,7 +51,7 @@ io.on('connection', (socket) => {
         io.to(user.courseID).emit('roomData', { user: user.courseID, users: getUsersInRoom(user.courseID) });
 
         callback();
-    });
+});
 
     socket.on('disconnect', () => {
         const user = removeUser(socket.id);

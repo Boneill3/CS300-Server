@@ -1,14 +1,16 @@
 const users = [];
-const db = require('./database');
 
-const addUser = ({ id, name, courseID }) => {
-    name = name.trim().toLowerCase();
-    courseID = courseID.trim().toLowerCase();
-
+const addUser = ({ id, name, courseID, course }) => {
     const existingUser = users.find((user) => user.courseID === courseID && user.name === name);
 
     if(existingUser) {
         return { error: 'Username is taken' }
+    }
+
+    validStudent = course.students.filter(student => student.name == name);
+    if(validStudent.length == 0) {
+        console.log(`Access Denied for ${name} in ${course._id}`);
+        return { error: 'User does not have access to this class' }
     }
 
     const user = {id, name, courseID};
@@ -31,8 +33,8 @@ const getUser = (id) => users.find((user) => user.id === id);
 const getUsersInRoom = (courseID) => users.filter((user) => user.courseID === courseID);
 
 function getOfflineStudents(course) {
-    const online = getUsersInRoom(course._id.toString().trim().toLowerCase());
-    return course.Students.filter((student) => online.findIndex((onlineStudent) => onlineStudent.name == student.name.toLowerCase()) == -1);
+    const online = getUsersInRoom(course._id);
+    return course.students.filter((student) => online.findIndex((onlineStudent) => onlineStudent.name == student.name) == -1);
 }
 
 module.exports = { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents }

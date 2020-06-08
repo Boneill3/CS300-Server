@@ -1,8 +1,9 @@
 const { MongoClient, ObjectID } = require('mongodb');
 
-function db() {
     const url = 'mongodb://localhost:27017'
     const dbName = 'schoolChat'
+
+function db() {
 
     //Course Functions
     //Create a new course
@@ -33,7 +34,9 @@ function db() {
                 await client.connect();
                 const db = client.db(dbName);
 
-                let courses = db.collection('courses').find();
+                let courses = db.collection('courses').aggregate([
+                    { $lookup: { from: "students", localField: "Students", foreignField: "_id", as: "students"}}
+                ]);
 
                 resolve(await courses.toArray());
                 client.close();
@@ -53,11 +56,16 @@ function db() {
                 await client.connect();
                 const db = client.db(dbName);
 
-                let course = db.collection('courses').findOne({ _id: ObjectID(id) });
+                const course = db.collection('courses').aggregate([
+                    { $match: { _id: id }},
+                    { $lookup: { from: "students", localField: "Students", foreignField: "_id", as: "students"}},
+                    { $limit: 1 }
+                ]).toArray();
 
                 resolve(await course);
                 client.close();
             } catch (error) {
+                console.log("Get Course By ID error:", error);
                 client.close();
                 reject(error);
             }
@@ -74,7 +82,7 @@ function db() {
                 const db = client.db(dbName);
 
                 const updatedCourse = await db.collection('courses')
-                    .findOneAndReplace({ _id: ObjectID(id) }, newCourse, { returnOriginal: false });
+                    .findOneAndReplace({ _id: id }, newCourse, { returnOriginal: false });
 
                 resolve(updatedCourse.value);
                 client.close();
@@ -89,6 +97,61 @@ function db() {
     return { getCourseList, createCourse, getCourseById, updateCourse }
 }
 
+function students () {
+
+    //Create a new student
+    function createStudent(student) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(url, { useUnifiedTopology: true });
+            try {
+                await client.connect();
+                const db = client.db(dbName);
+
+                const addedStudent = await db.collection('students').insertOne(student);
+
+                resolve(addedStudent.ops[0]);
+                client.close();
+
+            } catch (error) {
+                client.close();
+                reject(error);
+            }
+        });
+    } 
+
+    //Create a new student
+    function updateStudent(id, newStudent) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(url, { useUnifiedTopology: true });
+            try {
+                await client.connect();
+                const db = client.db(dbName);
+
+                //Remove existing course connections
+                result = await db.collection('courses').updateMany( {}, {$pull: { Students: ObjectID(id)}}, { multi: true});
+
+                const updatedStudent = await db.collection('students')
+                    .findOneAndReplace({ _id: ObjectID(id) }, newStudent, { returnOriginal: false });
+
+                //Add current course connections
+                for(course of newStudent.courses)
+                {
+                    await db.collection('courses').updateOne( {_id: course}, { $push: { Students: new ObjectID(id) }});
+                }
+
+                resolve(updatedStudent.value);
+                client.close();
+
+            } catch (error) {
+                client.close();
+                reject(error);
+            }
+        });
+    } 
+
+    return {createStudent, updateStudent}
+}
 
 
-module.exports = db();
+
+module.exports = { courses: db(), students: students() }
