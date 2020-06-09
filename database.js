@@ -21,6 +21,7 @@ function courses() {
 
             } catch (error) {
                 client.close();
+                console.log("Error creating course", error)
                 reject(error);
             }
         });
