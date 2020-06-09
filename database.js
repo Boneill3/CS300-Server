@@ -3,7 +3,7 @@ const { MongoClient, ObjectID } = require('mongodb');
     const url = 'mongodb://localhost:27017'
     const dbName = 'schoolChat'
 
-function db() {
+function courses() {
 
     //Course Functions
     //Create a new course
@@ -94,7 +94,26 @@ function db() {
 
     }
 
-    return { getCourseList, createCourse, getCourseById, updateCourse }
+    function addMessage(user, message) {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(url, { useUnifiedTopology: true });
+            try {
+                await client.connect();
+                const db = client.db(dbName);
+
+                const updatedCourse = await db.collection('courses')
+                    .updateOne({ _id: user.courseID }, { $push: { messages: message }}, { returnOriginal: false });
+
+                resolve(updatedCourse.value);
+                client.close();
+            } catch (error) {
+                client.close();
+                reject(error);
+            }
+        }); 
+    }
+
+    return { getCourseList, createCourse, getCourseById, updateCourse, addMessage }
 }
 
 function students () {
@@ -152,6 +171,4 @@ function students () {
     return {createStudent, updateStudent}
 }
 
-
-
-module.exports = { courses: db(), students: students() }
+module.exports = { courses: courses(), students: students() }

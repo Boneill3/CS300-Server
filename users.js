@@ -37,4 +37,8 @@ function getOfflineStudents(course) {
     return course.students.filter((student) => online.findIndex((onlineStudent) => onlineStudent.name == student.name) == -1);
 }
 
-module.exports = { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents }
+function testUsers(){
+    return users;
+}
+
+module.exports = { addUser, removeUser, getUser, getUsersInRoom, getOfflineStudents, testUsers }
