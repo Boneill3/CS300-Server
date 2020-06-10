@@ -81,6 +81,10 @@ function courses() {
             try {
                 await client.connect();
                 const db = client.db(dbName);
+                const originalCourse = await db.collection('courses').findOne({ _id: newCourse._id});
+                console.log("ORIGINAL", originalCourse);
+
+                newCourse.Students = originalCourse.Students;
 
                 const updatedCourse = await db.collection('courses')
                     .findOneAndReplace({ _id: id }, newCourse, { returnOriginal: false });
@@ -169,7 +173,26 @@ function students () {
         });
     } 
 
-    return {createStudent, updateStudent}
+    //Get List of all students
+    function getStudents() {
+        return new Promise(async (resolve, reject) => {
+            const client = new MongoClient(url, { useUnifiedTopology: true });
+            try {
+                await client.connect();
+                const db = client.db(dbName);
+
+                let students = db.collection('students').find();
+
+                resolve(await students.toArray());
+                client.close();
+            } catch (error) {
+                client.close();
+                reject(error);
+            }
+        });
+    } 
+
+    return {createStudent, updateStudent, getStudents}
 }
 
 module.exports = { courses: courses(), students: students() }

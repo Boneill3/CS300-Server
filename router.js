@@ -58,7 +58,7 @@ router.post('/student', bodyParser.json(), async (req, res) => {
         console.log("Error in post student:", error)
         res.send(error);
     }
-})
+});
 
 router.put('/student/:id', bodyParser.json(), async (req, res) => {
     try {
@@ -69,6 +69,17 @@ router.put('/student/:id', bodyParser.json(), async (req, res) => {
         console.log("Error in put student:", error)
         res.send(error);
     }
-})
+});
+
+router.get('/student', async (req, res) => {
+    try {
+        const result = await students.getStudents();
+        
+        res.send(result);
+    } catch(error) {
+        console.log("Error in get students:", error)
+        res.send(error);
+    }
+});
 
 module.exports = router;
